@@ -28,35 +28,68 @@ class FitnessFunction:
         self.feature_names = feature_names
     
     def compile_model(self, fc1, fc2, fc3, input_dims, out_dims): 
+        """
+            This method is used to compile the neural network model using adam and binary crossentropy.
+            Params:
+                fc1          : Number of hidden unit for fully connected layer 1.
+                fc2          : Number of hidden unit for fully connected layer 2.
+                fc3          : Number of hidden unit for fully connected layer 3.
+                input_dims   : Input Dimension of the Neural Network model, which number of features in the dataset.
+                out_dims     : Output Dimension of the Neural Network model, by default it is 1.
+        """
         model = ANN(fc1, fc2, fc3, input_dims, out_dims)
-        model.compile(optimizer=Adam(), loss="binary_crossentropy")
+        model.compile(optimizer=Adam(learning_rate=0.001), loss="binary_crossentropy")
         return model
 
-    def convert_to_nparray(self): 
-        train_X = np.asarray(train_X[col_names]).astype(np.float64)
-        train_y = np.asarray(train_y).astype(np.float64)
-        test_X = np.asarray(test_X[col_names]).astype(np.float64)
-        test_y = np.asarray(test_y).astype(np.float64)
-        return train_X, train_y, test_X, test_y
-
-    def train_model(self, genotype, train_X, train_y):
+    def convert_to_nparray(self, genotype): 
+        """
+            This method, will convert the data of type pandas dataframe into numpy array, to train a tensorflow model.
+            Params: 
+                genotype     : Genotype is the encoding of the features(individual in population).
+        """
         col_numbers = [_ for _ in range(len(genotype)) if genotype[_] == 1]
         col_names = [self.feature_names[i] for i in range(len(self.feature_names)) if i in col_numbers]
-
-        model = compile_model(16, 32, 64, len(col_names), 1)
-        model.fit(train_X, train_y, epochs=100)
-
-        col_numbers = []
-        return model, col_names
-
-    def test_model(self, model, test_X, train_X, selected_cols): 
-        pred_y = model.predict(test_X[selected_cols])
-        pred_train_y = model.predict(train_X[selected_cols])
         
-        return pred_y, pred_train_y
+        train_X = np.asarray(self.train_X[col_names])
+        train_y = np.asarray(self.train_y)
+        test_X = np.asarray(self.test_X[col_names])
+        test_y = np.asarray(self.test_y)
+        return train_X, train_y, test_X, test_y
 
+    def train_model(self, train_X, train_y, input_dims):
+        """
+            This method, will train a neural net model, with the specific individual.
+            Params:
+                train_X       : Independent variable to the model.
+                train_y       : Dependent variable to the model.
+                input_dims    : Input dimension of the model, len(individual).
+        """
+        model = self.compile_model(32, 16, 16, input_dims, 1)
+        model.fit(train_X, train_y, epochs=10, verbose=False)
+        col_numbers = []
+        return model
+
+    def test_model(self, model, test_X, train_X): 
+        """
+            This method, will return a prediction for the prediction data.
+            Params:
+                test_X        : Independent Variable of testing data.
+                model         : fitted model returned by the train_model method.
+                train_X       : Independent Variable of training data.
+        """
+        pred_y = model.predict(test_X, verbose=False)
+        pred_train_y = model.predict(train_X, verbose=False)
+        pred_y = np.where(pred_y >= 0.5, 1, 0)
+        return pred_y
+    
     def get_metrics_score(self, y_true, y_pred, regression): 
-
+        """
+            This method, will calculate the metrics value for the prediction done by the model.
+            Params: 
+                y_true        : Ground Truth value of the testing data.
+                y_pred        : Prediction data of the model.
+                regression    : To specify, whether it is regression task or classfication task.
+        """
         results = get_metrics_value(y_true, y_pred, regression)
 
         if not regression:
@@ -83,16 +116,21 @@ class FitnessFunction:
             return ((0.03 * acc) + (0.03 * recall) + (0.03 * precision) + (0.88 * f1_score))
         
 
-    def get_fitness_score(self,  regression): 
-
+    def get_fitness_score(self, regression, verbose=True): 
+        """
+            This method calculates the fitness score.
+            Params:
+                regression       : To specify, whether it is regression task or classfication task.
+        """
         for individual in self.population:
             if np.any(individual): 
-                train_X, train_y, test_X, test_y = self.convert_to_nparray()
-                model, selected_cols = self.train_model(individual, train_X, train_y)
-                y_pred, y_pred_for_train = self.test_model(model, test_X, train_X, selected_cols)
+                train_X, train_y, test_X, test_y = self.convert_to_nparray(individual)
+                model = self.train_model(train_X, train_y, len(individual))
+                y_pred = self.test_model(model, test_X, train_X)
                 score = self.get_metrics_score(test_y, y_pred, regression)
 
-                score = math.round(score, 5)
+                score = round(score, 5)
+                print("Score: ", score) if verbose else None
                 self.scores.append(score)
 
-        return self.scores
+        return self.scores / sum(self.scores), self.scores
