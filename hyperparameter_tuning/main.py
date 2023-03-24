@@ -1,6 +1,11 @@
 import tensorflow.keras as keras 
 import tensorflow as tf 
 import numpy as np 
+from population_generator import * 
+from next_population_generator import * 
+from preprocessing import * 
+from fitness_function import *
+
 from tensorflow.keras.layers import (Conv2D, BatchNormalization,
                                         MaxPool2D, ReLU,
                                         ELU, LeakyReLU, Flatten,

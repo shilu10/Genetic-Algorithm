@@ -2,7 +2,7 @@ import random
 import numpy as np 
 from typing import *
 import tensorflow as tf 
-
+from organism import *
 
 class GenPopulation:
     def __init__(self): 

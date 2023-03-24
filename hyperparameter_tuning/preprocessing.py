@@ -1,5 +1,7 @@
 import tensorflow as tf 
-import tensorflow.keras as tf 
+import tensorflow.keras as keras 
+import numpy as np 
+import random 
 
 
 def get_training_data(training_data, testing_data): 

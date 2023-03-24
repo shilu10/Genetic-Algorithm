@@ -1,3 +1,11 @@
+import numpy as np 
+import random 
+from organism import *
+from crossover import *
+from mutate import *
+
+
+
 def get_next_generation_population(population, fitness_score,
                                            mutation_rate, param): 
     """
