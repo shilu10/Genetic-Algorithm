@@ -3,7 +3,6 @@ import itertools
 import random
 import numpy as np 
 
-
 class GenPopulation:
     def __init__(self): 
         self.population = []

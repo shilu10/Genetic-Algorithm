@@ -1,54 +1,58 @@
 import pandas as pd 
 import numpy as np 
-from sklearn.model_selection import train_test_split
-from generate_population import *
-from model import *
+import sklearn
+from preprocessing import *
+from neural_net import *
+from population_generator import *
 from fitness_score import *
+from next_population_generator import *
 
-df = pd.read_csv("/home/adminuser/Downloads/sample_house.csv")
+df_path = "/kaggle/input/telco-customer-churn/WA_Fn-UseC_-Telco-Customer-Churn.csv"
 
-df = df[["MoSold", "MSSubClass", "LotFrontage", "LotArea", "MiscVal", "YrSold", "SalePrice", "SaleType", "LotShape"]]
+def main(dataframe_path, number_of_generation=10, mutation_rate=0.1, n_individual=100, max_features=25): 
+    """
+        This method is the combines all the genetic algo pieces into one, and evolve over generation,
+        to provide a fittest population.
+        Params:
+            dataframe_path         : Path for the csv file that contains the dataset.
+            number_of_generation   : Number of generation to evolve.
+            mutation_rate          : Mutation Rate, decides whether to mutate the children or not, based on probability.
+            n_individual           : Number of individuals, needed to be created in a population, if the value is 0, 
+                                     it will create a power(len(fearures), 2)
+            max_features           : Subset size, if value is 0, then the subset size will be len(features).
+    """
+    
+    dataframe = pd.read_csv(dataframe_path)
+    dataframe = preprocess_dataframe(dataframe)
+    
+    train_X, train_y, test_X, test_y = get_training_testing_data(dataframe, "Churn", 0.8)
+    print("Before Resampling", train_X.shape)
 
-# One-Hot Encoding
-sale_type_encoding = pd.get_dummies(df.SaleType)
-df = pd.concat([df, sale_type_encoding], axis=1)
-lot_shape_encoding = pd.get_dummies(df.LotShape)
-df = pd.concat([df, lot_shape_encoding], axis=1)
-#sales_condition_encoding = pd.get_dummies(df.SaleCondition)
-#df = pd.concat([df, sales_condition_encoding], axis=1)
+    train_X, train_y = handle_imbalance(train_X, train_y)
+    print("After Resampling", train_X.shape)
+
+    num_cols = len(train_X.columns)
+    generator = GenPopulation()
+    population = generator.generate(num_cols, n_individual, max_features)
+    
+    for i in range(number_of_generation): 
+        fitness_function = FitnessFunction(
+                                    population,
+                                    train_X,
+                                    train_y,
+                                    test_X,
+                                    test_y,
+                                    train_X.columns,
+                                    "acc"
+                                )
+        fitness_score , _= fitness_function.get_fitness_score(regression=False, verbose=False)
+        
+        new_generation_population = get_next_generation_population(population, fitness_score, mutation_rate)
+        population = new_generation_population
+        print(f"Generation: {i}, Max Fitness Score: {max(_)}")
+            
+    return population, fitness_score, _
 
 
-df.drop(["SaleType", "LotShape",], axis=1, inplace=True)
-df.LotFrontage = df.LotFrontage.fillna(df.LotFrontage.mean())
-
-# Splitting X and y
-y = df["SalePrice"]
-df.drop(["SalePrice"], axis=1, inplace=True)
-X = df
-
-
-train_X, test_X, train_y, test_y = train_test_split(X, y)
-
-n_features = len(train_X.columns)
-
-generator = GenPopulation()
-
-population = generator.generate(n_features, pow(n_features, 2), 0)
-
-model_builder = BuildModel("rf")
-
-svm_model = model_builder.build()
-
-fitness_function = FitnessFunction(
-                            population, 
-                            svm_model, 
-                            train_X,
-                            train_y,
-                            test_X,
-                            test_y,
-                            train_X.columns,
-                            "rmse"
-                        )
-
-fitness_score = fitness_function.get_fitness_score(regression=True)
-print(fitness_score)
+if __name__ == "__main__": 
+    population, fitness_score, _ = main(df_path, 20, 0.1, 50, 10)
