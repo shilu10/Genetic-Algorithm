@@ -2,20 +2,33 @@ import numpy as np
 import tensorflow as tf 
 import tensorflow.keras as tf 
 import random 
-
+from tensorflow.keras import Model 
+from tensorflow.keras.layers import (Input, Add, Conv2D, BatchNormalization,
+                                            GlobalAveragePooling2D, Dense)
 
 class Organism: 
+    """
+        Organism, is a whole component which includes multiple chromosome, in our case it is one chromosome.
+        Attributes:
+            params            : HyperParameter Dictionary, that will be used to build a chromosome.
+            prev_phase_best   : It is the previous phase best organism object. Best One decided based on fitness score.
+            phase             : Phase Number.
+    """
     def __init__(self, params, prev_phase_best=None, phase=0): 
         self.params = params 
         self.prev_phase_best = prev_phase_best
         self.phase = phase
-        self.chromosome = None 
-        self.build_chromosome()
+        self.chromosome = None
+        self.model = None
 
         if phase != 0:
             self.last_model = prev_phase_best.model
 
     def build_model(self):
+        """
+            This method, will build a tensorflow model, by using the hyperparameter and layer details of the self.chromosome. It has
+            different structure for phase0 and rest of other phases.
+        """
         keras.backend.clear_session()
         inputs = Input(shape=(32,32,3))
         if self.phase != 0:
@@ -29,7 +42,7 @@ class Organism:
                        kernel_size=self.chromosome['a_filter_size'],
                        use_bias=self.chromosome['a_include_BN'])(inter_inputs)
           
-            self.chromosome['activation_type'] = self.prevBestOrganism.chromosome['activation_type']
+            self.chromosome['activation_type'] = self.prev_phase_best.chromosome['activation_type']
         else:
 
             x = Conv2D(filters=self.chromosome['a_output_channels'],
@@ -67,13 +80,19 @@ class Organism:
                 x = Add()([y,x])
             x = GlobalAveragePooling2D()(x)
             x = Dense(10, activation='softmax')(x)
-        self.model = Model(inputs=[inputs], outputs=[x])
-        self.model.compile(optimizer='adam',
+        model = Model(inputs=[inputs], outputs=[x])
+        model.compile(optimizer='adam',
                            loss='categorical_crossentropy',
                            metrics=['accuracy']) 
+        self.model = model
 
 
     def build_chromosome(self): 
+        """
+            This Method will build a chromosome, by combining a genes(different hyperparameter values). Once it build a chromosome,
+            with random hyperparameter values, it will assign the chromosome dictionary to the property(self.chromosome). Phase0, has 
+            different chromosome that reset other phases.
+        """
         if self.phase == 0:
             phase_params = self.params["phase0"]
             self.chromosome = {
@@ -103,4 +122,3 @@ class Organism:
                 'pool_type' : random.choice(phase_params['pool_type']),
                 'include_skip' : random.choice(phase_params['include_skip']),
             }
-
