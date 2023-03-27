@@ -6,7 +6,8 @@ import random
 
 def get_training_data(training_data, testing_data): 
     """
-        This Function used to convert the tensorflow data object into tensorflow eager object, that can use the GPU.
+        This Function used to convert the tensorflow data object into tensorflow eager object, that can use the 
+        GPU.
         Params: 
             training_data    : training data of the dataset.
             testing_data     : testing data of the dataset.

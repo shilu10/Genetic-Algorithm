@@ -1,16 +1,8 @@
 import tensorflow.keras as keras 
 import tensorflow as tf 
 import numpy as np 
-from population_generator import * 
-from next_population_generator import * 
-from preprocessing import * 
-from fitness_function import *
-
-from tensorflow.keras.layers import (Conv2D, BatchNormalization,
-                                        MaxPool2D, ReLU,
-                                        ELU, LeakyReLU, Flatten,
-                                        Dense, AveragePooling2D
-                                    )
+from tensorflow.keras.layers import (Conv2D, BatchNormalization, MaxPool2D, ReLU,
+                                         ELU, LeakyReLU, Flatten, Dense, AveragePooling2D)
 
 # In each generation, no new layer will be added to the model, only the crossover and mutation, will happen
 # Only in the phase, the new layer will be added with the prev_layers(best layer from the individual).
@@ -45,7 +37,8 @@ params = {
         'b_output_channels': [8, 16, 32, 64, 128, 256, 512],
         'include_pool': [True, False],
         'pool_type': [MaxPool2D, AveragePooling2D],
-        'include_skip': [True, False]
+        'include_skip': [True, False],
+        'activation_type': [ReLU, ELU, LeakyReLU],
     }
 
 }
@@ -110,4 +103,27 @@ def main(n_phase, n_generation, n_population, params):
     return population, fitness_scores, prev_phase_best, prediction_scores
 
 if __name__ == "__main__": 
-    population, fitness_score, prev_phase_best, prediction_scores = main(n_phase, n_generation, n_population, params)
+    population, fitness_score, prev_phase_best, prediction_scores = main(n_phase, n_generation,
+                                                                                n_population, params)
+
+
+
+"""
+
+phase: 0
+    Generation: 0
+      Successfully calculated the fitness score for individual: 0
+      Successfully calculated the fitness score for individual: 1
+      Successfully calculated the fitness score for individual: 2
+      Successfully calculated the fitness score for individual: 3
+      Successfully calculated the fitness score for individual: 4
+      Successfully calculated the fitness score for individual: 5
+      Successfully calculated the fitness score for individual: 6
+      Successfully calculated the fitness score for individual: 7
+      Successfully calculated the fitness score for individual: 8
+      Successfully calculated the fitness score for individual: 9
+prediction scores:  [0.1    0.1432 0.1209 0.1229 0.235  0.3573 0.2962 0.2682 0.1452 0.1   ]
+[+] Successfully generated the next generation's population
+
+
+"""

@@ -6,6 +6,7 @@ from mutate import *
 
 
 
+
 def get_next_generation_population(population, fitness_score,
                                            mutation_rate, param): 
     """
@@ -22,7 +23,7 @@ def get_next_generation_population(population, fitness_score,
         index = fitness_score.argmax()
         new_generation_population.append(population[index])
         
-    for _ in range(len(population)//2-1): 
+    for _ in range(4): 
         parent_1, parent_2 = pick_parents(population, fitness_score)
         # Mutation.
         if random.random() < mutation_rate: 

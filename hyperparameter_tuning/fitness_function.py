@@ -6,6 +6,7 @@ import math
 import tensorflow.keras as tf 
 from sklearn.metrics import accuracy_score
 
+
 class FitnessFunction: 
     def __init__(self): 
         '''
@@ -109,4 +110,3 @@ class FitnessFunction:
             
         fitness_scores = np.array(fitness_scores)
         return fitness_scores / sum(fitness_scores), fitness_scores
-            
